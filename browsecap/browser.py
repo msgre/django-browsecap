@@ -17,7 +17,6 @@ class MobileBrowserParser(object):
 
     def __init__(self):
         self.mobile_cache = {}
-        self.mobile_data_cache = {}
         self.crawler_cache = {}
         self.parse()
 
@@ -26,7 +25,6 @@ class MobileBrowserParser(object):
         data = cache.get(CACHE_KEY)
         if data:
             self.mobile_browsers = map(re.compile, data['mobile_browsers'])
-            self.mobile_browsers_data = data['mobile_browsers_data']
             self.crawlers = map(re.compile, data['crawlers'])
             return
 
@@ -50,7 +48,6 @@ class MobileBrowserParser(object):
             browsers[name] = sec
 
         self.mobile_browsers = []
-        self.mobile_browsers_data = {} 
         self.crawlers = []
         for name, conf in browsers.items():
             # only process those that are not abstract parents
@@ -63,21 +60,21 @@ class MobileBrowserParser(object):
                 parent = browsers[p]
                 conf.update(parent)
 
-            qname = re.escape(name)
-            qname = qname.replace("\\?", ".").replace("\\*", ".*?")
-            qname = "^%s$" % qname
-                        
-            self.mobile_browsers.append(qname)
-            self.mobile_browsers_data[qname] = conf
-            
-            self.crawlers.append(qname)
+            # we only care for mobiles and crawlers
+            if conf.get('ismobiledevice', 'false') == 'true' or conf.get('crawler', 'false') == 'true':
+                qname = re.escape(name)
+                qname = qname.replace("\\?", ".").replace("\\*", ".*?")
+                qname = "^%s$" % qname
+
+            # register the user agent
+            if conf.get('ismobiledevice', 'false') == 'true':
+                self.mobile_browsers.append(qname)
+
+            if conf.get('crawler', 'false') == 'true':
+                self.crawlers.append(qname)
 
         # store in cache to speed up next load
-        cache.set(CACHE_KEY, {
-            'mobile_browsers': self.mobile_browsers, 
-            'mobile_browsers_data': self.mobile_browsers_data, 
-            'crawlers': self.crawlers,
-        }, CACHE_TIMEOUT)
+        cache.set(CACHE_KEY, {'mobile_browsers': self.mobile_browsers, 'crawlers': self.crawlers}, CACHE_TIMEOUT)
 
         # compile regexps
         self.mobile_browsers = map(re.compile, self.mobile_browsers)
@@ -99,23 +96,6 @@ class MobileBrowserParser(object):
         cache[useragent] = out
         return out
 
-
-    def find_in_data(self, useragent, agent_list, agent_list_data, cache):
-        try:
-            return cache['%s_data' % useragent]
-        except KeyError, e:
-            pass
-        
-        for sec_pat in agent_list:
-            if sec_pat.match(useragent):
-                out = agent_list_data[sec_pat.pattern]
-                break
-            else:
-                out = False
-        cache[useragent] = out
-        return out
-
-
     def is_mobile(self, useragent):
         'Returns True if the given useragent is a known mobile browser, False otherwise.'
         return self.find_in_list(useragent, self.mobile_browsers, self.mobile_cache)
@@ -123,18 +103,14 @@ class MobileBrowserParser(object):
     def is_crawler(self, useragent):
         'Returns True if the given useragent is a known crawler, False otherwise.'
         return self.find_in_list(useragent, self.crawlers, self.crawler_cache)
-        
-    def get_browser_data(self, useragent):
-        return self.find_in_data(useragent, self.mobile_browsers, self.mobile_browsers_data, self.mobile_data_cache)
 
-        
+
 # instantiate the parser
 browsers = MobileBrowserParser()
 
 # provide access to methods as functions for convenience
 is_mobile = browsers.is_mobile
 is_crawler = browsers.is_crawler
-get_browser_data = browsers.get_browser_data
 
 
 def update():
