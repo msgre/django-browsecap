@@ -108,7 +108,6 @@ class MobileBrowserParser(object):
         
         for sec_pat in agent_list:
             if sec_pat.match(useragent):
-                print useragent
                 out = agent_list_data[sec_pat.pattern]
                 break
             else:
