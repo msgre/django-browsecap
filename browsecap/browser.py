@@ -4,9 +4,8 @@ import os
 
 from django.core.cache import cache
 
-CACHE_KEY = 'browsecap'
-CACHE_TIMEOUT = 60*60*2 # 2 hours
-BC_PATH = os.path.abspath(os.path.dirname(__file__ or os.getcwd()))
+from browsecap.settings import *
+
 
 class MobileBrowserParser(object):
     def __new__(cls, *args, **kwargs):
@@ -22,7 +21,7 @@ class MobileBrowserParser(object):
 
     def parse(self):
         # try egtting the parsed definitions from cache
-        data = cache.get(CACHE_KEY)
+        data = cache.get(BROWSECAP_CACHE_KEY)
         if data:
             self.mobile_browsers = map(re.compile, data['mobile_browsers'])
             self.crawlers = map(re.compile, data['crawlers'])
@@ -31,7 +30,7 @@ class MobileBrowserParser(object):
         # parse browscap.ini
         cfg = ConfigParser()
         files = ("browscap.ini", "bupdate.ini")
-        read_ok = cfg.read([os.path.join(BC_PATH, name) for name in files])
+        read_ok = cfg.read([os.path.join(BROWSECAP_INI_PATH, name) for name in files])
         if len(read_ok) == 0:
             raise IOError, "Could not read browscap.ini, " + \
                   "please get it from http://www.GaryKeith.com"
@@ -74,7 +73,7 @@ class MobileBrowserParser(object):
                 self.crawlers.append(qname)
 
         # store in cache to speed up next load
-        cache.set(CACHE_KEY, {'mobile_browsers': self.mobile_browsers, 'crawlers': self.crawlers}, CACHE_TIMEOUT)
+        cache.set(BROWSECAP_CACHE_KEY, {'mobile_browsers': self.mobile_browsers, 'crawlers': self.crawlers}, BROWSECAP_CACHE_TIMEOUT)
 
         # compile regexps
         self.mobile_browsers = map(re.compile, self.mobile_browsers)
