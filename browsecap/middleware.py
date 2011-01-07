@@ -1,4 +1,5 @@
 import time
+import re
 
 from django.http import HttpResponseRedirect
 from django.utils.http import cookie_date
@@ -13,7 +14,7 @@ class MobileRedirectMiddleware(object):
     def process_request(self, request):
         if not getattr(settings, 'MOBILE_DOMAIN', False):
             return 
-
+        
         # test for mobile browser
         if (
                 # check for override cookie, do not check if present
@@ -26,6 +27,9 @@ class MobileRedirectMiddleware(object):
                     and 
                     # check browser type
                     is_mobile(request.META['HTTP_USER_AGENT'])
+                    and
+                    # check whether ipad should be redirected
+                    self.redirect_ipad(request.META['HTTP_USER_AGENT'])
                 )
             ):
             redirect = settings.MOBILE_DOMAIN
@@ -41,3 +45,9 @@ class MobileRedirectMiddleware(object):
             response.set_cookie('ismobile', '1', domain=settings.SESSION_COOKIE_DOMAIN, max_age=max_age, expires=expires)
             return response
 
+
+    def redirect_ipad(self, user_agent):
+        match = re.search('iPad', user_agent, re.I)
+        if getattr(settings, 'BROWSECAP_REDIRECT_IPAD', True) and match:
+            return True
+        return False
