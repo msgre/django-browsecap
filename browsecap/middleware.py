@@ -1,7 +1,7 @@
 import time
 import re
 
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.utils.http import cookie_date
 from django.conf import settings
 
@@ -14,6 +14,29 @@ class MobileRedirectMiddleware(object):
     def process_request(self, request):
         if not getattr(settings, 'MOBILE_DOMAIN', False):
             return 
+                
+        # Cookie settings
+        max_age = getattr(settings, 'MOBILE_COOKIE_MAX_AGE', DEFAULT_COOKIE_MAX_AGE)
+        expires_time = time.time() + max_age
+        expires = cookie_date(expires_time)
+        
+        
+        # test for browser return
+        if (
+                # is mobile?
+                is_mobile(request.META['HTTP_USER_AGENT']) 
+                    and 
+                # but has param m2w?
+                request.GET.get('m2w', False) 
+                    and 
+                # does currently not have a is browser cookie with 1
+                request.COOKIES.get('isbrowser', '0') == '0'
+        ):
+            ''' Set a cookie for Mobile 2 Web if a mobile browser does not want to browse mobile '''
+            response = HttpResponseRedirect(request.META['PATH_INFO'])
+            response.set_cookie('ismobile', '0', domain=settings.SESSION_COOKIE_DOMAIN, max_age=max_age, expires=expires)
+            response.set_cookie('isbrowser', '1', domain=settings.SESSION_COOKIE_DOMAIN, max_age=max_age, expires=expires)
+            return response
         
         # test for mobile browser
         if (
@@ -35,19 +58,18 @@ class MobileRedirectMiddleware(object):
             redirect = settings.MOBILE_DOMAIN
             if getattr(settings, 'MOBILE_REDIRECT_PRESERVE_URL', False):
                 redirect = redirect.rstrip('/') + request.path_info
+            
             # redirect to mobile domain
             response = HttpResponseRedirect(redirect)
-
-            # set cookie to identify the browser as mobile
-            max_age = getattr(settings, 'MOBILE_COOKIE_MAX_AGE', DEFAULT_COOKIE_MAX_AGE)
-            expires_time = time.time() + max_age
-            expires = cookie_date(expires_time)
             response.set_cookie('ismobile', '1', domain=settings.SESSION_COOKIE_DOMAIN, max_age=max_age, expires=expires)
             return response
 
 
     def redirect_ipad(self, user_agent):
-        match = re.search('iPad', user_agent, re.I)
-        if getattr(settings, 'BROWSECAP_REDIRECT_IPAD', True) and match:
+        if not getattr(settings, 'BROWSECAP_REDIRECT_IPAD', True):
+            return False
+        else:
+            match = re.search('iPad', user_agent, re.I)
+            if not getattr(settings, 'BROWSECAP_REDIRECT_IPAD', True) and match:
+                return False
             return True
-        return False
