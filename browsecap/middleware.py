@@ -14,12 +14,11 @@ class MobileRedirectMiddleware(object):
     def process_request(self, request):
         if not getattr(settings, 'MOBILE_DOMAIN', False):
             return 
-                
+        
         # Cookie settings
         max_age = getattr(settings, 'MOBILE_COOKIE_MAX_AGE', DEFAULT_COOKIE_MAX_AGE)
         expires_time = time.time() + max_age
         expires = cookie_date(expires_time)
-        
         
         # test for browser return
         if (
@@ -66,10 +65,8 @@ class MobileRedirectMiddleware(object):
 
 
     def redirect_ipad(self, user_agent):
-        if not getattr(settings, 'BROWSECAP_REDIRECT_IPAD', True):
-            return False
-        else:
+        if not getattr(settings, 'BROWSECAP_REDIRECT_IPAD'):
             match = re.search('iPad', user_agent, re.I)
-            if not getattr(settings, 'BROWSECAP_REDIRECT_IPAD', True) and match:
+            if match:
                 return False
-            return True
+        return True
