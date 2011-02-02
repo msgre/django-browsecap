@@ -1,7 +1,7 @@
 import time
 import re
 
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect
 from django.utils.http import cookie_date
 from django.conf import settings
 
