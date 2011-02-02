@@ -19,11 +19,11 @@ class MobileRedirectMiddleware(object):
         max_age = getattr(settings, 'MOBILE_COOKIE_MAX_AGE', DEFAULT_COOKIE_MAX_AGE)
         expires_time = time.time() + max_age
         expires = cookie_date(expires_time)
-        
+
         # test for browser return
         if (
                 # is mobile?
-                is_mobile(request.META['HTTP_USER_AGENT']) 
+                is_mobile(request.META.get('HTTP_USER_AGENT', None)) 
                     and 
                 # but has param m2w?
                 request.GET.get('m2w', False) 
@@ -32,7 +32,7 @@ class MobileRedirectMiddleware(object):
                 request.COOKIES.get('isbrowser', '0') == '0'
         ):
             ''' Set a cookie for Mobile 2 Web if a mobile browser does not want to browse mobile '''
-            response = HttpResponseRedirect(request.META['PATH_INFO'])
+            response = HttpResponseRedirect(request.META.get('PATH_INFO', '/'))
             response.set_cookie('ismobile', '0', domain=settings.SESSION_COOKIE_DOMAIN, max_age=max_age, expires=expires)
             response.set_cookie('isbrowser', '1', domain=settings.SESSION_COOKIE_DOMAIN, max_age=max_age, expires=expires)
             return response
@@ -48,10 +48,10 @@ class MobileRedirectMiddleware(object):
                     request.COOKIES.get('isbrowser', '0') != '1' 
                     and 
                     # check browser type
-                    is_mobile(request.META['HTTP_USER_AGENT'])
+                    is_mobile(request.META.get('HTTP_USER_AGENT', None))
                     and
                     # check whether ipad should be redirected
-                    self.redirect_ipad(request.META['HTTP_USER_AGENT'])
+                    self.redirect_ipad(request.META.get('HTTP_USER_AGENT', None))
                 )
             ):
             redirect = settings.MOBILE_DOMAIN
