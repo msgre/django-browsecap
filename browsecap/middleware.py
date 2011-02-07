@@ -23,7 +23,7 @@ class MobileRedirectMiddleware(object):
         # test for browser return
         if (
                 # is mobile?
-                is_mobile(request.META.get('HTTP_USER_AGENT', None)) 
+                is_mobile(request.META.get('HTTP_USER_AGENT', '')) 
                     and 
                 # but has param m2w?
                 request.GET.get('m2w', False) 
@@ -48,10 +48,10 @@ class MobileRedirectMiddleware(object):
                     request.COOKIES.get('isbrowser', '0') != '1' 
                     and 
                     # check browser type
-                    is_mobile(request.META.get('HTTP_USER_AGENT', None))
+                    is_mobile(request.META.get('HTTP_USER_AGENT', ''))
                     and
                     # check whether ipad should be redirected
-                    self.redirect_ipad(request.META.get('HTTP_USER_AGENT', None))
+                    self.redirect_ipad(request.META.get('HTTP_USER_AGENT', ''))
                 )
             ):
             redirect = settings.MOBILE_DOMAIN
