@@ -1,6 +1,6 @@
 from djangosanetesting import UnitTestCase
 
-from browsecap.browser import is_mobile, is_crawler
+from browsecap.browser import is_mobile, is_rich_mobile, is_crawler
 
 class TestIsMobileDetection(UnitTestCase):
     mobile = [
@@ -47,6 +47,44 @@ class TestIsMobileDetection(UnitTestCase):
                 fails.append(m)
         self.assert_equals([], fails)
 
+
+class TestRichIsMobileDetection(UnitTestCase):
+    non_rich_mobile = [
+            'Opera/9.60 (J2ME/MIDP; Opera Mini/4.2.13337/504; U; cs) Presto/2.2.0',
+            'BlackBerry9000/4.6.0.126 Profile/MIDP-2.0 Configuration/CLDC-1.1 VendorID/170',
+            'Mozilla/5.0 (PLAYSTATION 3; 1.00)',
+            'Mozilla/5.0 (SymbianOS/9.2; U; Series60/3.1 NokiaN95/31.0.017; Profile/MIDP-2.0 Configuration/CLDC-1.1 ) AppleWebKit/413 (KHTML, like Gecko) Safari/413',
+            'Mozilla/5.0 (SymbianOS/9.1; U; en-us) AppleWebKit/413 (KHTML, like Gecko) Safari/413',
+        ]
+
+    rich_mobile = [
+            # Google G1
+            'Mozilla/5.0 (Linux; U; Android 1.0; en-us; dream) AppleWebKit/525.10+ (KHTML, like Gecko) Version/3.0.4 Mobile Safari/523.12.2',
+            'Mozilla/5.0 (Linux; U; Android 1.5; en-us; T-Mobile G1 Build/CRB43) AppleWebKit/528.5+ (KHTML, like Gecko) Version/3.1.2 Mobile Safari/525.20.1',
+            # HTC Desire
+            'Mozilla/5.0 (Linux; U; Android 2.2; nl-nl; Desire_A8181 Build/FRF91) AppleWebKit/533.1 (KHTML, like Gecko) Version/4.0 Mobile Safari/533.1',
+            # HTC Droid Incredible
+            'Mozilla/5.0 (Linux; U; Android 2.1-update1; en-us; ADR6300 Build/ERE27) AppleWebKit/530.17 (KHTML, like Gecko) Version/4.0 Mobile Safari/530.17',
+            # iPhone
+            'Mozilla/5.0 (iPhone; U; CPU iPhone OS 3_1_2 like Mac OS X; en-us) AppleWebKit/528.18 (KHTML, like Gecko) Version/4.0 Mobile/7D11 Safari/528.16',
+            'Mozilla/5.0 (iPhone; U; CPU iPhone OS 3_0 like Mac OS X; en-us) AppleWebKit/528.18 (KHTML, like Gecko) Version/4.0 Mobile/7A341 Safari/528.16',
+        ]
+
+    def test_identify_known_non_rich_mobile_browsers(self):
+        fails = []
+        for m in self.non_rich_mobile:
+            if is_rich_mobile(m):
+                fails.append(m)
+        self.assert_equals([], fails)
+
+    def test_identify_known_rich_mobile_browsers(self):
+        fails = []
+        for m in self.rich_mobile:
+            if not is_rich_mobile(m):
+                fails.append(m)
+        self.assert_equals([], fails)
+
+
 class TestIsCrawlerDetection(UnitTestCase):
     crawler = [
             'Googlebot-Image/1.0 ( http://www.googlebot.com/bot.html)',
@@ -57,7 +95,7 @@ class TestIsCrawlerDetection(UnitTestCase):
             'msnbot/1.1 (+http://search.msn.com/msnbot.htm)',
             'Baiduspider+(+http://www.baidu.com/search/spider_jp.html) ',
         ]
-    
+
     desktop = [
             'Windows-RSS-Platform/2.0 (MSIE 8.0; Windows NT 5.1)',
             'Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 5.1; Trident/4.0; GTB6; .NET CLR 1.1.4322; .NET CLR 2.0.50727)',
@@ -84,7 +122,7 @@ class TestIsCrawlerDetection(UnitTestCase):
             if is_crawler(m):
                 fails.append(m)
         self.assert_equals([], fails)
-    
+
     def test_identify_known_crawler_browsers(self):
         fails = []
         for m in self.crawler:

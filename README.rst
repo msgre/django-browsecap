@@ -6,7 +6,9 @@ Browsecap is a simple library for django for detecting browser type.
 The main interface consists of two function in `browsecap.browser`:
 
     `is_mobile`: returns True if the given user agent is a known mobile browser
-    
+
+    `is_rich_mobile`: returns True if the given user agent is a known "rich" mobile browser
+
     `is_crawler`: returns True if the given user agent is a known crawler
 
 MobileRedirectMiddleware
@@ -38,6 +40,26 @@ processing even if used every time (middleware), the only thing that is
 somewhat slow (under a second on a laptop) is parsing the browscap.ini file.
 This is done only when the module is first loaded and stores it's results in
 cache so that start of the next thread/process should not be hindered.
+
+"Rich" mobile phones
+--------------------
+
+If you need to identify modern mobile browsers with rich capabilities, you
+could use `is_rich_mobile` function.
+
+This function by default put device into "rich" group, if it have set
+"Platform" property inside `browsercap.ini` file to "Android" or "iPhone OSX"
+value. This behaviour should be overriden by `RICH_MOBILE_BROWSER_FN` in your
+`settings.py` file.  It should be set to callable function, which accept one
+`conf` argument and return `True` (device is rich) or `False` (device isn't
+rich). For example:
+
+    def my_rich_fn(conf):
+        javascript = conf.get('javascript', 'false')
+        supportscss = conf.get('supportscss', 'false')
+        return javascript == 'true' and supportscss == 'true'
+
+    RICH_MOBILE_BROWSER_FN = my_rich_fn
 
 Credits
 -------
