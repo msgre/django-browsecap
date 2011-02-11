@@ -7,7 +7,7 @@ The main interface consists of two function in `browsecap.browser`:
 
     `is_mobile`: returns True if the given user agent is a known mobile browser
 
-    `is_rich_mobile`: returns True if the given user agent is a known "rich" mobile browser
+    `is_rich_mobile`: returns True if the given user agent is a known "rich" mobile browser, see bellow
 
     `is_crawler`: returns True if the given user agent is a known crawler
 
